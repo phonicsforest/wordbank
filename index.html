@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Word Bank</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 10px;
+      background: #f5f5f5;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    select {
+      width: 100%;
+      font-size: 18px;
+      padding: 10px;
+      margin-bottom: 15px;
+    }
+
+    #wordGrid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+.word {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 16px 5px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  text-align: center;
+}
+
+.word-en {
+  font-size: 26px;   /* 🔥 英文大隻 */
+  font-weight: 600;
+}
+
+.word-zh {
+  font-size: 14px;   /* 🔹 中文細啲 */
+  color: #888;
+  margin-top: 4px;
+}
+
+.word:active {
+  background: #e8f0ff;
+}
+
+    .word:active {
+      background: #e8f0ff;
+    }
+
+.word-en {
+  font-size: 26px;
+  font-weight: 600;
+  position: relative;
+}
+
+/* ---------- . → 直虛線 ---------- */
+.dot-line {
+  display: inline-block;
+  width: 0;              /* ❗️唔佔闊度 */
+  height: 28px;
+  position: relative;
+}
+
+.dot-line::after {
+  content: "";
+  position: absolute;
+  left: 50%;             /* ❗️置中 */
+  transform: translateX(-30%);
+  top: 5px;
+  height: 100%;
+  border-left: 2px dotted #b5b5b5;
+}
+/* ---------- * → 細 o ---------- */
+.small-o-wrap {
+  position: relative;
+  display: inline-block;
+ font-size: inherit;
+}
+
+.small-o {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border: 2px solid #7b4a1e;
+  border-radius: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 10px; /* 控制位置 */
+  background: transparent;
+}
+.small-o-wrap span {
+  pointer-events: none;
+}
+
+.macron-wrap {
+  position: relative;
+  display: inline;
+}
+
+.macron {
+  position: absolute;
+  width: 90%;              /* 橫線長度 */
+  height: 2px;
+  background: #7b4a1e;     /* 啡色 */
+  left: 50%;
+  transform: translateX(-50%);
+  top: -1px;               /* 控制高度（最重要） */
+  border-radius: 2px;
+}
+  </style>
+</head>
+<body>
+
+<h2>Word Bank</h2>
+
+<select id="lessonSelect"></select>
+
+<div id="wordGrid"></div>
+
+<audio id="audioPlayer"></audio>
+
+<script src="data.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  if (typeof lessons === "undefined") {
+    alert("data.js 未載入或 lessons 未定義");
+    return;
+  }
+
+  const lessonSelect = document.getElementById("lessonSelect");
+  const wordGrid = document.getElementById("wordGrid");
+  const audioPlayer = document.getElementById("audioPlayer");
+
+  lessons.forEach((lesson, index) => {
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = lesson.title || `Lesson ${index + 1}`;
+    lessonSelect.appendChild(option);
+  });
+
+function loadLesson(index) {
+  wordGrid.innerHTML = "";
+  const words = lessons[index].words || [];
+
+  words.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "word";
+
+    div.innerHTML = `
+<div class="word-en">${formatWord(item.en)}</div>
+      <div class="word-zh">${item.zh}</div>
+    `;
+
+    div.addEventListener("click", () => playWord(item.en));
+    wordGrid.appendChild(div);
+  });
+}
+
+function cleanWordForAudio(word) {
+  return word.replace(/[.*-]/g, "");
+}
+
+function playWord(word) {
+  const cleanWord = cleanWordForAudio(word);
+
+  audioPlayer.src = `audio/${cleanWord}.mp3`;
+  audioPlayer.currentTime = 0;
+  audioPlayer.play().catch(err => {
+    console.log("Audio play failed:", err);
+  });
+}
+  lessonSelect.addEventListener("change", () => {
+    loadLesson(lessonSelect.value);
+  });
+
+  loadLesson(0);
+
+});
+
+function formatWord(word) {
+  let result = "";
+
+  for (let i = 0; i < word.length; i++) {
+    const char = word[i];
+
+    if (char === ".") {
+      result += `<span class="dot-line"></span>`;
+    } 
+    else if (char === "*") {
+      const nextChar = word[i + 1] || "";
+      result += `<span class="small-o-wrap">${nextChar}<span class="small-o"></span></span>`;
+      i++;
+    } 
+    else if (char === "-") {
+      const nextChar = word[i + 1] || "";
+      result += `<span class="macron-wrap">${nextChar}<span class="macron"></span></span>`;
+      i++;
+    }
+    else {
+      result += char;
+    }
+  }
+
+  return result;
+}
+</script>
+
+</body>
+</html>
